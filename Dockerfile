@@ -13,6 +13,5 @@ RUN cargo build --release
 
 FROM debian:buster-slim AS runtime
 WORKDIR app
-RUN ls 
-COPY --from=builder /target/release/ /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/app"]
+# COPY --from=builder /app/target/release/app /usr/local/bin
+CMD --from=builder ./target/release/discord-bot
