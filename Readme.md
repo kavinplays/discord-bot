@@ -1,0 +1,1 @@
+Hello, just learning rust by making a discord bot
