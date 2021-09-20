@@ -1,7 +1,17 @@
-FROM rust:1.55
+FROM lukemathwalker/cargo-chef:latest-rust-1.53.0 AS chef
+WORKDIR app
 
-COPY ./ ./
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-RUN cargo build --release
+FROM chef AS builder 
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+COPY . .
+RUN cargo build --release --bin app
 
-CMD ["./target/release/holodeck"]
+FROM debian:buster-slim AS runtime
+WORKDIR app
+COPY --from=builder /app/target/release/app /usr/local/bin
+ENTRYPOINT ["/usr/local/bin/app"]
