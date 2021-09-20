@@ -114,7 +114,7 @@ impl EventHandler for Handler {
 
         println!("I now have the following global slash commands: {:#?}", commands);
 
-        let guild_command = GuildId(123456789)
+        let guild_command = GuildId(824967769635946516)
             .create_application_command(&ctx.http, |command| {
                 command.name("wonderful_command").description("An amazing command")
             })
