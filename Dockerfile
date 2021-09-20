@@ -13,5 +13,5 @@ RUN cargo build --release
 
 FROM debian:buster-slim AS runtime
 WORKDIR app
-COPY --from=builder /app/target/release/app /usr/local/bin
+COPY --from=builder /target/release/app /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/app"]
