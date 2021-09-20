@@ -9,9 +9,9 @@ FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
-RUN cargo build --release
+RUN cargo build --release --bin app
 
 FROM debian:buster-slim AS runtime
 WORKDIR app
-# COPY --from=builder /app/target/release/app /usr/local/bin
-CMD --from=builder ./target/release/discord-bot
+COPY --from=builder /app/target/release/discord-bot /usr/local/bin
+ENTRYPOINT ["/usr/local/bin/discord-bot"]
