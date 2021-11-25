@@ -11,6 +11,11 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN rustup install nightly
 RUN cargo +nightly build --release
+RUN echo '/usr/local/lib' >> /etc/ld.so.conf
+RUN cat /etc/ld.so.conf
+RUN ldconfig
+RUN echo 'export LD_LIBRARY_PATH=/usr/local/lib' >> ~/.bash_profile && . ~/.bash_profile
+
 
 FROM debian:buster-slim AS runtime
 WORKDIR app
