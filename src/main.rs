@@ -1,3 +1,4 @@
+#![feature(str_split_as_str)]
 use std::env;
 use dotenv::dotenv;
 use serenity::{
@@ -5,6 +6,7 @@ use serenity::{
     model::{
         gateway::Ready,
         id::GuildId,
+        channel::Message,
         interactions::{
             application_command::{
                 ApplicationCommand,
@@ -17,8 +19,12 @@ use serenity::{
     },
     prelude::*,
 };
+use serenity::model::prelude::ChannelId;
+use tokio::time::{sleep, Duration};
+extern crate reqwest;
 
 struct Handler;
+
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -44,6 +50,9 @@ impl EventHandler for Handler {
                         "Please provide a valid user".to_string()
                     }
                 },
+                "wonderful_command" => {
+                    "Hey, I'm the the wonderful command!".to_string()
+                },
                 _ => "not implemented :(".to_string(),
             };
 
@@ -60,7 +69,15 @@ impl EventHandler for Handler {
         }
     }
 
-    async fn ready(&self, ctx: Context, ready: Ready) {
+    async fn message(&self, ctx: Context, msg: Message) {
+        if msg.content == "!ping" {
+            if let Err(why) = msg.channel_id.say(&ctx.http, "Pong!").await {
+                println!("Error sending message: {:?}", why);
+            }
+        }
+    }
+
+    async fn ready(&self, ctx: Context, ready: Ready){
         println!("{} is connected!", ready.user.name);
 
         let commands = ApplicationCommand::set_global_application_commands(&ctx.http, |commands| {
@@ -77,38 +94,6 @@ impl EventHandler for Handler {
                             .required(true)
                     })
                 })
-                .create_application_command(|command| {
-                    command
-                        .name("welcome")
-                        .description("Welcome a user")
-                        .create_option(|option| {
-                            option
-                                .name("user")
-                                .description("The user to welcome")
-                                .kind(ApplicationCommandOptionType::User)
-                                .required(true)
-                        })
-                        .create_option(|option| {
-                            option
-                                .name("message")
-                                .description("The message to send")
-                                .kind(ApplicationCommandOptionType::String)
-                                .required(true)
-                                .add_string_choice(
-                                    "Welcome to our cool server! Ask me if you need help",
-                                    "pizza",
-                                )
-                                .add_string_choice("Hey, do you want a coffee?", "coffee")
-                                .add_string_choice(
-                                    "Welcome to the club, you're now a good person. Well, I hope.",
-                                    "club",
-                                )
-                                .add_string_choice(
-                                    "I hope that you brought a controller to play together!",
-                                    "game",
-                                )
-                        })
-                })
         })
         .await;
 
@@ -120,29 +105,72 @@ impl EventHandler for Handler {
             })
             .await;
 
-        println!("I created the following guild command: {:#?}", guild_command);
+        println!("I created the following guild command: {:#?}", guild_command);  
+
+        let etherscan = env::var("ETHERSCAN")
+            .expect("Expected an application id in the environment");
+        let link = "https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=";
+        let api_link = link.to_owned() + &etherscan;
+
+        loop{
+            let request = foo(&api_link).await.unwrap();
+            let eth_gas = request.to_string();
+            if request<80
+            {
+                ChannelId(852380942676918302).say(&ctx, "<@463380179260276736> Gas is currently ".to_owned() + &eth_gas).await.unwrap();
+                sleep(Duration::from_millis(120000)).await;
+            }
+            else if request > 79 && request < 130
+            {
+                ChannelId(852380942676918302).say(&ctx, "Gas is currently ".to_owned() + &eth_gas).await.unwrap();
+                sleep(Duration::from_millis(30000)).await;
+            }
+            else
+            {
+                sleep(Duration::from_millis(5000)).await;
+            }
+            // println!("{}",request);
+        }
     }
+}
+
+async fn foo(link: &str) -> Result<i32, reqwest::Error> {
+    let text = reqwest::get(link)
+        .await?
+        .text()
+        .await?;
+    let mut lol = text.split("SafeGasPrice\":\"");
+    lol.next();
+    let bruh = lol.as_str().split('"');
+    let mut temp = 0;
+    for v in bruh {
+        let parsed: String = v.parse().unwrap();
+        println!("{}", parsed);
+        let my_int = parsed.parse::<i32>().unwrap();
+        temp = my_int;
+        break
+    }
+    Ok(temp)
 }
 
 #[tokio::main]
 async fn main() {
-    let railway = env::var("RAILWAY_STATIC_URL").is_err();
-    if railway == true{
-        dotenv().expect(".env file not found");
-    }
-    let token = env::var("TOKEN")
-        .expect("Expected a token in the environment");
+    dotenv().expect(".env file not found");
+    // Configure the client with your Discord bot token in the environment.
+    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+
+    // The Application Id is usually the Bot User Id.
     let application_id: u64 = env::var("APPLICATION_ID")
         .expect("Expected an application id in the environment")
         .parse()
         .expect("application id is not a valid id");
 
-    let mut client =
-        Client::builder(&token)
-            .event_handler(Handler)
-            .application_id(application_id)
-            .await
-            .expect("Err creating client");
+    // Build our client.
+    let mut client = Client::builder(token)
+        .event_handler(Handler)
+        .application_id(application_id)
+        .await
+        .expect("Error creating client");
 
     if let Err(why) = client.start().await {
         println!("Client error: {:?}", why);
