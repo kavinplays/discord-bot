@@ -11,7 +11,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN rustup install nightly
 RUN cargo +nightly build --release
-RUN sudo apt install openssl-1.1 openssl-solibs-1.1 -y
+RUN apt install openssl-1.1 openssl-solibs-1.1 -y
 RUN echo '/usr/local/lib' >> /etc/ld.so.conf
 RUN cat /etc/ld.so.conf
 RUN ldconfig
