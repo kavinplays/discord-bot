@@ -120,7 +120,7 @@ impl EventHandler for Handler {
                 ChannelId(852380942676918302).say(&ctx, "<@463380179260276736> Gas is currently ".to_owned() + &eth_gas).await.unwrap();
                 sleep(Duration::from_millis(120000)).await;
             }
-            else if request > 79 && request < 130
+            else if request > 79 && request < 100
             {
                 ChannelId(852380942676918302).say(&ctx, "Gas is currently ".to_owned() + &eth_gas).await.unwrap();
                 sleep(Duration::from_millis(30000)).await;
