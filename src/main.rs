@@ -4,7 +4,11 @@ use dotenv::dotenv;
 use serenity::{
     async_trait,
     model::{
-        gateway::Ready,
+        gateway::{
+            Ready,
+            Activity,
+        },
+        user::OnlineStatus,
         id::GuildId,
         channel::Message,
         interactions::{
@@ -111,25 +115,31 @@ impl EventHandler for Handler {
             .expect("Expected an application id in the environment");
         let link = "https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=";
         let api_link = link.to_owned() + &etherscan;
-
+        let mut wait_amount = 0;
+    
         loop{
             let request = foo(&api_link).await.unwrap();
             let eth_gas = request.to_string();
-            if request<80
-            {
-                ChannelId(852380942676918302).say(&ctx, "<@463380179260276736> Gas is currently ".to_owned() + &eth_gas).await.unwrap();
-                sleep(Duration::from_millis(120000)).await;
+            if wait_amount<0
+            { 
+                if request<50
+                {
+                    ChannelId(852380942676918302).say(&ctx, "<@463380179260276736> Gas is currently ".to_owned() + &eth_gas).await.unwrap();
+                    wait_amount = 120;
+                    println!("no message for 10 mins");
+                }
+                else if request > 49 && request < 90
+                {
+                    ChannelId(852380942676918302).say(&ctx, "Gas is currently ".to_owned() + &eth_gas).await.unwrap();
+                    wait_amount = 60;
+                    println!("no message for 5 mins");
+                }
             }
-            else if request > 79 && request < 100
-            {
-                ChannelId(852380942676918302).say(&ctx, "Gas is currently ".to_owned() + &eth_gas).await.unwrap();
-                sleep(Duration::from_millis(30000)).await;
-            }
-            else
-            {
-                sleep(Duration::from_millis(5000)).await;
-            }
-            // println!("{}",request);
+            wait_amount = wait_amount - 1;
+            let activity = Activity::playing(&eth_gas);
+            let status = OnlineStatus::Online;
+            ctx.set_presence(Some(activity), status).await;
+            sleep(Duration::from_millis(5000)).await;
         }
     }
 }
