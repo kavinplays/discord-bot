@@ -155,7 +155,7 @@ async fn foo(link: &str) -> Result<i32, reqwest::Error> {
 
 #[tokio::main]
 async fn main() {
-    dotenv().expect(".env file not found");
+    // dotenv().expect(".env file not found");
     // Configure the client with your Discord bot token in the environment.
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
 
