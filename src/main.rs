@@ -116,13 +116,15 @@ impl EventHandler for Handler {
         let link = "https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=";
         let api_link = link.to_owned() + &etherscan;
         let mut wait_amount = 0;
-    
         loop{
-            let request = foo(&api_link).await.unwrap();
-            let eth_gas = request.to_string();
-            if wait_amount<0
-            { 
-                if request<50
+            if wait_amount<=0
+            {
+                let request = foo(&api_link).await.unwrap();
+                let eth_gas = request.to_string();
+                if request==0{
+                    println!("error has occured!");
+                }
+                else if request<50
                 {
                     ChannelId(852380942676918302).say(&ctx, "<@463380179260276736> Gas is currently ".to_owned() + &eth_gas).await.unwrap();
                     wait_amount = 120;
@@ -133,13 +135,13 @@ impl EventHandler for Handler {
                     ChannelId(852380942676918302).say(&ctx, "Gas is currently ".to_owned() + &eth_gas).await.unwrap();
                     wait_amount = 60;
                     println!("no message for 5 mins");
-                }
+                }  
+                let activity = Activity::playing(&eth_gas);
+                let status = OnlineStatus::Online;
+                ctx.set_presence(Some(activity), status).await;
+                sleep(Duration::from_millis(5000)).await;
             }
             wait_amount = wait_amount - 1;
-            let activity = Activity::playing(&eth_gas);
-            let status = OnlineStatus::Online;
-            ctx.set_presence(Some(activity), status).await;
-            sleep(Duration::from_millis(5000)).await;
         }
     }
 }
@@ -149,16 +151,18 @@ async fn foo(link: &str) -> Result<i32, reqwest::Error> {
         .await?
         .text()
         .await?;
-    let mut lol = text.split("SafeGasPrice\":\"");
-    lol.next();
-    let bruh = lol.as_str().split('"');
     let mut temp = 0;
-    for v in bruh {
-        let parsed: String = v.parse().unwrap();
-        println!("{}", parsed);
-        let my_int = parsed.parse::<i32>().unwrap();
-        temp = my_int;
-        break
+    if text.contains("SafeGasPrice") {
+        let mut lol = text.split("SafeGasPrice\":\"");
+        lol.next();
+        let bruh = lol.as_str().split('"');
+        for v in bruh {
+            let parsed: String = v.parse().unwrap();
+            println!("{}", parsed);
+            let my_int = parsed.parse::<i32>().unwrap();
+            temp = my_int;
+            break
+        }
     }
     Ok(temp)
 }
